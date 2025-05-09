@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, onValue } from "firebase/database";
+import { getDatabase, ref, onValue, set } from "firebase/database";
 
 // Firebase Config
 const firebaseConfig = {
@@ -30,11 +30,10 @@ function App() {
     solar_power: "Loading...",
     energy_consumption: "Loading...",
     cost_savings: "Loading...",
+    fan_manual: "OFF",
+    light_manual: "OFF",
+    mode: "ai"
   });
-
-  const [mode, setMode] = useState("AI"); // AI or Manual mode
-  const [lightSwitch, setLightSwitch] = useState(false);
-  const [fanSwitch, setFanSwitch] = useState(false);
 
   useEffect(() => {
     const dbRef = ref(database, "/");
@@ -43,7 +42,8 @@ function App() {
       (snapshot) => {
         const data = snapshot.val();
         if (data) {
-          setSensorData({
+          setSensorData(prev => ({
+            ...prev,
             brightness: data.brightness ?? "N/A",
             current: data.current ?? "N/A",
             fan_speed: data.fan_speed ?? "N/A",
@@ -55,7 +55,10 @@ function App() {
             solar_power: data.solar_power ?? "N/A",
             energy_consumption: data.energy_consumption ?? "N/A",
             cost_savings: data.cost_savings ?? "N/A",
-          });
+            fan_manual: data.fan_manual ?? "OFF",
+            light_manual: data.light_manual ?? "OFF",
+            mode: data.mode ?? "ai"
+          }));
         }
       },
       (error) => {
@@ -68,49 +71,50 @@ function App() {
   // Function to get the color based on the value
   const getCircleColor = (value, isForEnergy = false, isForSecondRow = false) => {
     if (isNaN(value)) {
-      // For non-numeric values
-      if (value === "LOW") return isForSecondRow ? "#007bff" : "#f39c12"; // Blue for second row
-      if (value === "HIGH") return isForSecondRow ? "#007bff" : "#2ecc71"; // Green for high
-      return "#9b59b6"; // Purple for other non-numeric values
+      if (value === "LOW") return isForSecondRow ? "#007bff" : "#f39c12";
+      if (value === "HIGH") return isForSecondRow ? "#007bff" : "#2ecc71";
+      return "#9b59b6";
     }
 
     const numberValue = parseFloat(value);
 
     if (isForEnergy) {
-      // Energy thresholds (customize these values based on your needs)
-      if (numberValue <= 10) return "#e74c3c"; // Red for low energy savings
-      if (numberValue > 10 && numberValue <= 50) return "#f39c12"; // Yellow for moderate
-      return "#2ecc71"; // Green for good
+      if (numberValue <= 10) return "#e74c3c";
+      if (numberValue > 10 && numberValue <= 50) return "#f39c12";
+      return "#2ecc71";
     } else {
-      // General sensor values
-      if (numberValue <= 30) return isForSecondRow ? "#007bff" : "#e74c3c"; // Blue for second row, red for low
-      if (numberValue > 30 && numberValue <= 70) return isForSecondRow ? "#007bff" : "#f39c12"; // Blue for second row, yellow for medium
-      return isForSecondRow ? "#007bff" : "#2ecc71"; // Blue for second row, green for high
+      if (numberValue <= 30) return isForSecondRow ? "#007bff" : "#e74c3c";
+      if (numberValue > 30 && numberValue <= 70) return isForSecondRow ? "#007bff" : "#f39c12";
+      return isForSecondRow ? "#007bff" : "#2ecc71";
     }
   };
 
   // Toggle between AI and Manual mode
   const handleModeToggle = () => {
-    setMode((prevMode) => (prevMode === "AI" ? "Manual" : "AI"));
+    const newMode = sensorData.mode === "ai" ? "manual" : "ai";
+    set(ref(database, "mode"), newMode)
+      .then(() => console.log("Mode updated to:", newMode))
+      .catch((error) => console.error("Error updating mode:", error));
   };
 
   // Toggle light switch
   const handleLightToggle = () => {
-    setLightSwitch(!lightSwitch);
-    // Here you would typically send a command to Firebase to control the light
-    console.log("Light switched to:", !lightSwitch);
+    const newLightState = sensorData.light_manual === "ON" ? "OFF" : "ON";
+    set(ref(database, "light_manual"), newLightState)
+      .then(() => console.log("Light switched to:", newLightState))
+      .catch((error) => console.error("Error updating light:", error));
   };
 
   // Toggle fan switch
   const handleFanToggle = () => {
-    setFanSwitch(!fanSwitch);
-    // Here you would typically send a command to Firebase to control the fan
-    console.log("Fan switched to:", !fanSwitch);
+    const newFanState = sensorData.fan_manual === "ON" ? "OFF" : "ON";
+    set(ref(database, "fan_manual"), newFanState)
+      .then(() => console.log("Fan switched to:", newFanState))
+      .catch((error) => console.error("Error updating fan:", error));
   };
 
   return (
     <>
-      {/* Bootstrap */}
       <link
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
         rel="stylesheet"
@@ -143,7 +147,6 @@ function App() {
           dominant-baseline: middle;
         }
 
-        /* Style for toggle switch */
         .switch {
           position: relative;
           display: inline-block;
@@ -208,10 +211,16 @@ function App() {
         {/* Mode Toggle */}
         <div className="switch-container mb-4">
           <label className="switch">
-            <input type="checkbox" onChange={handleModeToggle} checked={mode === "AI"} />
+            <input 
+              type="checkbox" 
+              onChange={handleModeToggle} 
+              checked={sensorData.mode === "ai"} 
+            />
             <span className="slider"></span>
           </label>
-          <span className="switch-label">{mode} Mode</span>
+          <span className="switch-label">
+            {sensorData.mode === "ai" ? "AI" : "Manual"} Mode
+          </span>
         </div>
 
         {/* First Row - LDR, Brightness, Temperature, Fan Speed */}
@@ -255,7 +264,7 @@ function App() {
           })}
         </div>
 
-        {/* Second Row - PIR, Rain (Centered, Blue Color) */}
+        {/* Second Row - PIR, Rain */}
         <div className="row g-4 mt-4 justify-content-center">
           {["pir", "rain"].map((key) => {
             const value = sensorData[key];
@@ -339,7 +348,7 @@ function App() {
         </div>
 
         {/* Manual Controls - Only shown in Manual mode */}
-        {mode === "Manual" && (
+        {sensorData.mode === "manual" && (
           <div className="row justify-content-center mt-5">
             <div className="col-md-6">
               <div className="card shadow p-4 border-0">
@@ -348,19 +357,31 @@ function App() {
                   <div className="col-6 text-center">
                     <div className="switch-container">
                       <label className="switch">
-                        <input type="checkbox" checked={lightSwitch} onChange={handleLightToggle} />
+                        <input 
+                          type="checkbox" 
+                          checked={sensorData.light_manual === "ON"} 
+                          onChange={handleLightToggle} 
+                        />
                         <span className="slider"></span>
                       </label>
-                      <span className="switch-label">Light {lightSwitch ? "ON" : "OFF"}</span>
+                      <span className="switch-label">
+                        Light {sensorData.light_manual === "ON" ? "ON" : "OFF"}
+                      </span>
                     </div>
                   </div>
                   <div className="col-6 text-center">
                     <div className="switch-container">
                       <label className="switch">
-                        <input type="checkbox" checked={fanSwitch} onChange={handleFanToggle} />
+                        <input 
+                          type="checkbox" 
+                          checked={sensorData.fan_manual === "ON"} 
+                          onChange={handleFanToggle} 
+                        />
                         <span className="slider"></span>
                       </label>
-                      <span className="switch-label">Fan {fanSwitch ? "ON" : "OFF"}</span>
+                      <span className="switch-label">
+                        Fan {sensorData.fan_manual === "ON" ? "ON" : "OFF"}
+                      </span>
                     </div>
                   </div>
                 </div>
