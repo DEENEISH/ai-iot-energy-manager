@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/ai-iot-energy-manager/static/css/main.ff18d886.css",
-    "main.js": "/ai-iot-energy-manager/static/js/main.e006a64c.js",
+    "main.css": "/ai-iot-energy-manager/static/css/main.e5066ada.css",
+    "main.js": "/ai-iot-energy-manager/static/js/main.1720a4f5.js",
     "static/js/453.45359aa2.chunk.js": "/ai-iot-energy-manager/static/js/453.45359aa2.chunk.js",
     "index.html": "/ai-iot-energy-manager/index.html",
-    "main.ff18d886.css.map": "/ai-iot-energy-manager/static/css/main.ff18d886.css.map",
-    "main.e006a64c.js.map": "/ai-iot-energy-manager/static/js/main.e006a64c.js.map",
+    "main.e5066ada.css.map": "/ai-iot-energy-manager/static/css/main.e5066ada.css.map",
+    "main.1720a4f5.js.map": "/ai-iot-energy-manager/static/js/main.1720a4f5.js.map",
     "453.45359aa2.chunk.js.map": "/ai-iot-energy-manager/static/js/453.45359aa2.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.ff18d886.css",
-    "static/js/main.e006a64c.js"
+    "static/css/main.e5066ada.css",
+    "static/js/main.1720a4f5.js"
   ]
 }
