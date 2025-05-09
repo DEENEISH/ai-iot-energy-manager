@@ -32,6 +32,10 @@ function App() {
     cost_savings: "Loading...",
   });
 
+  const [mode, setMode] = useState("AI"); // AI or Manual mode
+  const [lightSwitch, setLightSwitch] = useState(false);
+  const [fanSwitch, setFanSwitch] = useState(false);
+
   useEffect(() => {
     const dbRef = ref(database, "/");
     const unsubscribe = onValue(
@@ -85,6 +89,25 @@ function App() {
     }
   };
 
+  // Toggle between AI and Manual mode
+  const handleModeToggle = () => {
+    setMode((prevMode) => (prevMode === "AI" ? "Manual" : "AI"));
+  };
+
+  // Toggle light switch
+  const handleLightToggle = () => {
+    setLightSwitch(!lightSwitch);
+    // Here you would typically send a command to Firebase to control the light
+    console.log("Light switched to:", !lightSwitch);
+  };
+
+  // Toggle fan switch
+  const handleFanToggle = () => {
+    setFanSwitch(!fanSwitch);
+    // Here you would typically send a command to Firebase to control the fan
+    console.log("Fan switched to:", !fanSwitch);
+  };
+
   return (
     <>
       {/* Bootstrap */}
@@ -119,10 +142,77 @@ function App() {
           text-anchor: middle;
           dominant-baseline: middle;
         }
+
+        /* Style for toggle switch */
+        .switch {
+          position: relative;
+          display: inline-block;
+          width: 60px;
+          height: 34px;
+        }
+
+        .switch input {
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+
+        .slider {
+          position: absolute;
+          cursor: pointer;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: #ccc;
+          transition: 0.4s;
+          border-radius: 34px;
+        }
+
+        .slider:before {
+          position: absolute;
+          content: "";
+          height: 26px;
+          width: 26px;
+          border-radius: 50%;
+          left: 4px;
+          bottom: 4px;
+          background-color: white;
+          transition: 0.4s;
+        }
+
+        input:checked + .slider {
+          background-color: #4caf50;
+        }
+
+        input:checked + .slider:before {
+          transform: translateX(26px);
+        }
+
+        .switch-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          margin-bottom: 15px;
+        }
+
+        .switch-label {
+          margin-top: 5px;
+          font-size: 14px;
+        }
       `}</style>
 
       <div className="container py-5">
         <h2 className="text-center mb-5 fw-bold">🌞 AI-IoT SMART ENERGY MANAGEMENT SYSTEM</h2>
+
+        {/* Mode Toggle */}
+        <div className="switch-container mb-4">
+          <label className="switch">
+            <input type="checkbox" onChange={handleModeToggle} checked={mode === "AI"} />
+            <span className="slider"></span>
+          </label>
+          <span className="switch-label">{mode} Mode</span>
+        </div>
 
         {/* First Row - LDR, Brightness, Temperature, Fan Speed */}
         <div className="row g-4">
@@ -247,6 +337,37 @@ function App() {
             );
           })}
         </div>
+
+        {/* Manual Controls - Only shown in Manual mode */}
+        {mode === "Manual" && (
+          <div className="row justify-content-center mt-5">
+            <div className="col-md-6">
+              <div className="card shadow p-4 border-0">
+                <h3 className="text-center mb-4">Manual Controls</h3>
+                <div className="row justify-content-center">
+                  <div className="col-6 text-center">
+                    <div className="switch-container">
+                      <label className="switch">
+                        <input type="checkbox" checked={lightSwitch} onChange={handleLightToggle} />
+                        <span className="slider"></span>
+                      </label>
+                      <span className="switch-label">Light {lightSwitch ? "ON" : "OFF"}</span>
+                    </div>
+                  </div>
+                  <div className="col-6 text-center">
+                    <div className="switch-container">
+                      <label className="switch">
+                        <input type="checkbox" checked={fanSwitch} onChange={handleFanToggle} />
+                        <span className="slider"></span>
+                      </label>
+                      <span className="switch-label">Fan {fanSwitch ? "ON" : "OFF"}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="text-center mt-5 text-muted small">
           &copy; {new Date().getFullYear()} Smart Energy Management Dashboard
