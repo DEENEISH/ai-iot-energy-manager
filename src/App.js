@@ -27,9 +27,10 @@ function App() {
     rain: "Loading...",
     speed: "Loading...",
     temp: "Loading...",
-    solar_power: "Loading...",
-    energy_consumption: "Loading...",
+    power: "Loading...",
+    current_consumption: "Loading...",
     cost_savings: "Loading...",
+    cost_usage: "Loading...",
     fan_manual: "OFF",
     light_manual: "OFF",
     mode: "ai"
@@ -42,19 +43,36 @@ function App() {
       (snapshot) => {
         const data = snapshot.val();
         if (data) {
+          // Calculate values
+          const current = parseFloat(data.current) || 0;
+          const voltage = 5; // Assuming 5V system
+          const power = (current * voltage).toFixed(2); // P = I*V
+          
+          // Calculate current consumption percentage (0.14A out of 0.5A)
+          const currentPercentage = current > 0.5 ? 100 : (current / 0.5) * 100;
+          
+          // Electricity rates and solar efficiency
+          const ratePerWh = 0.30; // RM0.30 per watt-hour
+          const solarEfficiency = 0.8; // Assume solar covers 80% of usage
+          
+          // Calculate costs
+          const hourlyUsageCost = (power * ratePerWh).toFixed(2);
+          const hourlySavings = (power * ratePerWh * solarEfficiency).toFixed(2);
+
           setSensorData(prev => ({
             ...prev,
             brightness: data.brightness ?? "N/A",
-            current: data.current ?? "N/A",
+            current: current.toFixed(2) + "A",
             fan_speed: data.fan_speed ?? "N/A",
             ldr: data.ldr ?? "N/A",
             pir: data.pir ?? "N/A",
             rain: data.rain ?? "N/A",
             speed: data.speed ?? "N/A",
             temp: data.temp ?? "N/A",
-            solar_power: data.solar_power ?? "N/A",
-            energy_consumption: data.energy_consumption ?? "N/A",
-            cost_savings: data.cost_savings ?? "N/A",
+            power: power + "W",
+            current_consumption: current.toFixed(2) + "A\n" + currentPercentage.toFixed(0) + "%",
+            cost_savings: "Saved:\nRM" + hourlySavings + "/h",
+            cost_usage: "Cost:\nRM" + hourlyUsageCost + "/h",
             fan_manual: data.fan_manual ?? "OFF",
             light_manual: data.light_manual ?? "OFF",
             mode: data.mode ?? "ai"
@@ -68,7 +86,6 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  // Function to get the color based on the value
   const getCircleColor = (value, isForEnergy = false, isForSecondRow = false) => {
     if (isNaN(value)) {
       if (value === "LOW") return isForSecondRow ? "#007bff" : "#f39c12";
@@ -89,7 +106,6 @@ function App() {
     }
   };
 
-  // Toggle between AI and Manual mode
   const handleModeToggle = () => {
     const newMode = sensorData.mode === "ai" ? "manual" : "ai";
     set(ref(database, "mode"), newMode)
@@ -97,7 +113,6 @@ function App() {
       .catch((error) => console.error("Error updating mode:", error));
   };
 
-  // Toggle light switch
   const handleLightToggle = () => {
     const newLightState = sensorData.light_manual === "ON" ? "OFF" : "ON";
     set(ref(database, "light_manual"), newLightState)
@@ -105,7 +120,6 @@ function App() {
       .catch((error) => console.error("Error updating light:", error));
   };
 
-  // Toggle fan switch
   const handleFanToggle = () => {
     const newFanState = sensorData.fan_manual === "ON" ? "OFF" : "ON";
     set(ref(database, "fan_manual"), newFanState)
@@ -141,25 +155,22 @@ function App() {
         }
         .circle-text {
           fill: #007bff;
-          font-size: 6px;
+          font-size: 5px;
           font-weight: bold;
           text-anchor: middle;
           dominant-baseline: middle;
         }
-
         .switch {
           position: relative;
           display: inline-block;
           width: 60px;
           height: 34px;
         }
-
         .switch input {
           opacity: 0;
           width: 0;
           height: 0;
         }
-
         .slider {
           position: absolute;
           cursor: pointer;
@@ -171,7 +182,6 @@ function App() {
           transition: 0.4s;
           border-radius: 34px;
         }
-
         .slider:before {
           position: absolute;
           content: "";
@@ -183,22 +193,18 @@ function App() {
           background-color: white;
           transition: 0.4s;
         }
-
         input:checked + .slider {
           background-color: #4caf50;
         }
-
         input:checked + .slider:before {
           transform: translateX(26px);
         }
-
         .switch-container {
           display: flex;
           flex-direction: column;
           align-items: center;
           margin-bottom: 15px;
         }
-
         .switch-label {
           margin-top: 5px;
           font-size: 14px;
@@ -305,19 +311,50 @@ function App() {
           })}
         </div>
 
-        {/* Third Row - Energy Saving Calculation */}
-        <h3 className="text-center mt-5 mb-4">Energy Saving Calculation</h3>
+        {/* Third Row - Energy Calculation */}
+        <h3 className="text-center mt-5 mb-4">Energy Calculation</h3>
         <div className="row g-4">
-          {["solar_power", "energy_consumption", "cost_savings"].map((key) => {
-            const value = sensorData[key];
-            const isNumeric = !isNaN(parseFloat(value)) && isFinite(value);
-            const displayValue = isNumeric
-              ? Math.min(100, Math.max(0, parseFloat(value)))
-              : 100;
-            const color = getCircleColor(value, true);
+          {["power", "current_consumption", "cost_savings", "cost_usage"].map((key) => {
+            let value, displayValue, color, displayText, title;
+            
+            if (key === "current_consumption") {
+              const parts = sensorData.current_consumption.split('\n');
+              displayText = parts.map((part, i) => (
+                <tspan x="18" dy={i === 0 ? 0 : 5} key={i}>{part}</tspan>
+              ));
+              const current = parseFloat(sensorData.current) || 0;
+              displayValue = current > 0.5 ? 100 : (current / 0.5) * 100;
+              color = getCircleColor(displayValue, true);
+              title = "Current (0.5A max)";
+            } 
+            else if (key === "power") {
+              displayText = sensorData.power;
+              const powerValue = parseFloat(sensorData.power) || 0;
+              displayValue = powerValue > 100 ? 100 : powerValue;
+              color = getCircleColor(powerValue, true);
+              title = "Power";
+            }
+            else if (key === "cost_savings") {
+              const parts = sensorData.cost_savings.split('\n');
+              displayText = parts.map((part, i) => (
+                <tspan x="18" dy={i === 0 ? 0 : 5} key={i}>{part}</tspan>
+              ));
+              displayValue = 100;
+              color = "#2ecc71";
+              title = "Cost Savings";
+            }
+            else {
+              const parts = sensorData.cost_usage.split('\n');
+              displayText = parts.map((part, i) => (
+                <tspan x="18" dy={i === 0 ? 0 : 5} key={i}>{part}</tspan>
+              ));
+              displayValue = 100;
+              color = "#e74c3c";
+              title = "Usage Cost";
+            }
 
             return (
-              <div className="col-sm-6 col-lg-4" key={key}>
+              <div className="col-sm-6 col-lg-3" key={key}>
                 <div className="card shadow h-100 text-center p-4 border-0">
                   <div className="circle-chart mx-auto mb-3">
                     <svg className="circle-svg" viewBox="0 0 36 36">
@@ -335,12 +372,12 @@ function App() {
                            a 15.9155 15.9155 0 0 1 0 31.831
                            a 15.9155 15.9155 0 0 1 0 -31.831"
                       />
-                      <text x="18" y="20.5" className="circle-text">
-                        {String(value).toUpperCase()}
+                      <text x="18" y="18" className="circle-text">
+                        {displayText}
                       </text>
                     </svg>
                   </div>
-                  <h5 className="text-capitalize">{key.replace(/([A-Z])/g, ' $1')}</h5>
+                  <h5 className="text-capitalize">{title}</h5>
                 </div>
               </div>
             );
