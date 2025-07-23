@@ -247,7 +247,7 @@ function App() {
           // Prepare data for the chart
           setChartData([
             { name: 'Previous Bill', value: typeof previousMonthBill === 'number' ? previousMonthBill : 0 },
-            { name: 'Estimated Current Bill', value: calculatedEstimatedCurrentMonthBill },
+            { name: 'Current Bill', value: calculatedEstimatedCurrentMonthBill },
             { name: 'Savings', value: typeof calculatedTotalSavingsComparedToPrevious === 'number' ? calculatedTotalSavingsComparedToPrevious : 0 }
           ]);
 
