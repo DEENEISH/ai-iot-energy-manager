@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/ai-iot-energy-manager/static/css/main.09fa4298.css",
-    "main.js": "/ai-iot-energy-manager/static/js/main.f155299d.js",
+    "main.js": "/ai-iot-energy-manager/static/js/main.b498ec97.js",
     "static/js/453.3c67efd9.chunk.js": "/ai-iot-energy-manager/static/js/453.3c67efd9.chunk.js",
     "index.html": "/ai-iot-energy-manager/index.html",
     "main.09fa4298.css.map": "/ai-iot-energy-manager/static/css/main.09fa4298.css.map",
-    "main.f155299d.js.map": "/ai-iot-energy-manager/static/js/main.f155299d.js.map",
+    "main.b498ec97.js.map": "/ai-iot-energy-manager/static/js/main.b498ec97.js.map",
     "453.3c67efd9.chunk.js.map": "/ai-iot-energy-manager/static/js/453.3c67efd9.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.09fa4298.css",
-    "static/js/main.f155299d.js"
+    "static/js/main.b498ec97.js"
   ]
 }
