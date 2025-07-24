@@ -631,7 +631,7 @@ function App() {
           </div>
           <div className="col-sm-6 col-lg-4">
             <div className="card shadow h-100 text-center p-4 border-0">
-              <h5 className="mb-3">Estimated Current Month Bill (with Solar)</h5>
+              <h5 className="mb-3">Current Month Bill (with Solar)</h5>
               <p className="display-6 fw-bold text-success">{estimatedCurrentMonthBill}</p>
             </div>
           </div>
